@@ -55,7 +55,7 @@ def login():
         return jsonify({"error": "Invalid username or password."}), 401
 
     # Gerar o JWT
-    expiration_time = datetime.datetime.now() + datetime.timedelta(hours=1)  # Token válido por 1 hora
+    expiration_time = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)  # Token válido por 1 hora
     token = jwt.encode(
         {'user_id': str(user['_id']), 'exp': expiration_time},
         SECRET_KEY,
@@ -83,6 +83,7 @@ def load_logged_in_user():
             user = get_user_from_jwt(token)
             g.user = user
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+            print('Erro no JWT !')
             g.user = None
     else:
         g.user = None
