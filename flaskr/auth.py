@@ -24,6 +24,10 @@ def register():
         return jsonify({"error": "Username and password are required"}), 400
 
     db = get_db()
+
+    if db.users.find_one({"username": username}):
+        return jsonify({"error": "Username already taken"}), 400
+
     users_collection = db["users"]  # Acessa a collection correta
 
     try:
@@ -66,12 +70,14 @@ def login():
 
 
 def get_user_from_jwt(token):
-    token = token.split(" ")[1]
-    payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-    db = get_db()
-    users_collection = db["users"]
-    user = users_collection.find_one({"_id": ObjectId(payload['user_id'])})
-    return user
+    try:
+        token = token.split(" ")[1] if " " in token else token
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        db = get_db()
+        user = db["users"].find_one({"_id": ObjectId(payload['user_id'])})
+        return user
+    except (IndexError, jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return (f'User not found with token: {token}')
 
 
 @bp.before_app_request

@@ -60,16 +60,21 @@ def create():
 
     try:
         # Insere o usuário na collection
-        tasks_collection.insert_one({
+        task = {
             "title": title,
             "description": description,
             "status": status,
             "user_id": g.user['_id'],
             "expire_date": expire_date
-        })
+        }
+        tasks_collection.insert_one(task)
         return jsonify({"message": "Task registered successfully!"}), 201
     except Exception as error:
-        return jsonify({"error": f"{error} happen."}), 400
+        json = {
+            "message": "An error happen trying to create the task",
+            "error": str(error)
+        }
+        return jsonify(json), 400
 
 
 @bp.route('/<id>/update', methods=['PUT'])
@@ -100,7 +105,11 @@ def update(id):
 
     db = get_db()
     tasks_collection = db["tasks"]
-    filter = {"_id": ObjectId(id)}
+    filter = {"_id": ObjectId(id), "user_id": g.user["_id"]}
+
+    if tasks_collection.count_documents(filter) < 1:
+        return jsonify({"error": "Task not found"}), 404
+
     update = {
         '$set': {
             "title": title,
@@ -111,7 +120,7 @@ def update(id):
     }    
     tasks_collection.update_one(filter, update)
     
-    return jsonify({"message": "Task updated successfully!"}), 200
+    return jsonify({"message": "Task updated successfully!"}), 204
 
 
 @bp.route('/<id>/delete', methods=['DELETE'])
@@ -120,6 +129,6 @@ def delete(id):
     """ Rota para excluir um task """
     db = get_db()
     tasks_collection = db["tasks"]
-    filter = {"_id": ObjectId(id)}
+    filter = {"_id": ObjectId(id), "user_id": g.user["_id"]}
     tasks_collection.delete_one(filter)
-    return jsonify({"message": "Task deleted successfully!"}), 200
+    return jsonify({"message": "Task deleted successfully!"}), 204
