@@ -6,7 +6,7 @@ def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(Config)
-    # print(app.config)
+
     # ensure the instance folder exists
     try:
         os.makedirs(app.instance_path)
@@ -21,8 +21,8 @@ def create_app(test_config=None):
     from . import auth
     app.register_blueprint(auth.bp)
     
-    from . import blog
-    app.register_blueprint(blog.bp, url_prefix='/blog')
+    from . import task
+    app.register_blueprint(task.bp, url_prefix='/task')
     
     # a simple page that says hello
     @app.route('/hello')
