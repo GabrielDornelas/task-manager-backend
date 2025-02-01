@@ -1,7 +1,6 @@
 from flask import current_app, g
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from bson import json_util
 
 def get_db():
     """ Retorna a conexão com o banco de dados MongoDB """
@@ -29,12 +28,3 @@ def close_db(e=None):
 def init_app(app):
     """ Inicializa a aplicação com a configuração de fechamento da conexão """
     app.teardown_appcontext(close_db)
-
-def handle_collection_to_list(collection):
-    """ Converte os dados da coleção para um formato manipulável """
-    cursor = json_util.dumps(collection)
-    cursor = cursor.replace('{"$oid": ', '')
-    cursor = cursor.replace('"},', '",')
-    cursor = cursor.replace('{"$date": ', '')
-    cursor = cursor.replace('Z"}', 'Z"')
-    return json_util.loads(cursor)
