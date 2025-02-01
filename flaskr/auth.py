@@ -76,8 +76,8 @@ def get_user_from_jwt(token):
         db = get_db()
         user = db["users"].find_one({"_id": ObjectId(payload['user_id'])})
         return user
-    except (IndexError, jwt.ExpiredSignatureError, jwt.InvalidTokenError):
-        return (f'User not found with token: {token}')
+    except (IndexError, jwt.ExpiredSignatureError, jwt.InvalidTokenError) as error:
+        raise (error)
 
 
 @bp.before_app_request
@@ -88,9 +88,9 @@ def load_logged_in_user():
         try:
             user = get_user_from_jwt(token)
             g.user = user
-        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
-            print('Erro no JWT !')
+        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as error:
             g.user = None
+            return jsonify({"error": "Invalid token"}), 401
     else:
         g.user = None
 

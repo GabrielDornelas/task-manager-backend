@@ -1,6 +1,7 @@
 from flask import jsonify, request, g
-from ..utils import handle_collection_to_list
 from ..models.task import get_task_by_id, get_tasks_from_user, create_task, update_task, delete_task
+from ..views.task_view import task_response, tasks_list_response
+from .user_controller import login_required, get_logged_user_id
 
 def get_task_from_request(request):
     data = request.get_json()
@@ -17,27 +18,31 @@ def get_task_from_request(request):
         'user_id': g.user["_id"]
     }
 
+@login_required
 def get_task(id):
-    task = handle_collection_to_list(get_task_by_id(id))
+    task = task_response(get_task_by_id(id))
     if task is None:
         return jsonify({"error": "Task not found"}), 404
-    return task
+    return jsonify(task), 200
 
+@login_required
 def get_all_tasks():
-    tasks = handle_collection_to_list(get_tasks_from_user(g.user['_id']))
+    tasks = tasks_list_response(get_tasks_from_user(get_logged_user_id()))
     return jsonify(tasks), 200
 
 def is_the_user_task(id):
     task = get_task_by_id(id)
-    if task and task['user_id'] == g.user['_id']:
+    if task and task['user_id'] == get_logged_user_id():
         return True
     return False
 
+@login_required
 def create_new_task():
     task = get_task_from_request(request)
     create_task(task)
     return jsonify({"message": "Task created"}), 201
 
+@login_required
 def update_existing_task(id):
     if not is_the_user_task(id):
         return jsonify({"error": "Not user's task"}), 403
@@ -49,6 +54,7 @@ def update_existing_task(id):
         return jsonify({"error": "Task not found"}), 404
     return jsonify({"message": "Task updated successfully"}), 204
 
+@login_required
 def delete_existing_task(id):
     if not is_the_user_task(id):
         return jsonify({"error": "Not user's task"}), 403
