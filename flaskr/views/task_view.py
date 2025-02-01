@@ -1,4 +1,3 @@
-
 def task_response(task):
     """Formata uma única task"""
     return {

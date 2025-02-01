@@ -2,6 +2,7 @@ import os
 from flask import Flask
 from .config import Config
 from .routes.task_routes import task_bp
+from .routes.auth_routes import auth_bp
 
 def create_app(test_config=None):
     # create and configure the app
@@ -19,10 +20,8 @@ def create_app(test_config=None):
     db.init_app(app)
 
     # Register blueprints
-    from . import auth
-    app.register_blueprint(auth.bp)
-    
     app.register_blueprint(task_bp)
+    app.register_blueprint(auth_bp)
     
     # a simple page that says hello
     @app.route('/hello')
