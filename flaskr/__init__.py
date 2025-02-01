@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from .config import Config
+from .routes.task_routes import task_bp
 
 def create_app(test_config=None):
     # create and configure the app
@@ -21,12 +22,12 @@ def create_app(test_config=None):
     from . import auth
     app.register_blueprint(auth.bp)
     
-    from . import task
-    app.register_blueprint(task.bp, url_prefix='/task')
+    app.register_blueprint(task_bp)
     
     # a simple page that says hello
     @app.route('/hello')
     def hello():
         return 'Hello, World!'
-
+    # for rule in app.url_map.iter_rules():
+    #     print(f"Endpoint: {rule.endpoint}\nURL: {rule.rule}")
     return app
