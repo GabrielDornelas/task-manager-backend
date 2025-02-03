@@ -1,6 +1,7 @@
 from flask import current_app, g
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+import pymongo
 
 def get_db():
     """ Retorna a conexão com o banco de dados MongoDB """
@@ -28,3 +29,9 @@ def close_db(e=None):
 def init_app(app):
     """ Inicializa a aplicação com a configuração de fechamento da conexão """
     app.teardown_appcontext(close_db)
+    
+    # Criar índices únicos
+    with app.app_context():
+        db = get_db()
+        db.users.create_index([("email", pymongo.ASCENDING)], unique=True)
+        db.users.create_index([("username", pymongo.ASCENDING)], unique=True)

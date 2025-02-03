@@ -3,6 +3,12 @@ from flask import Flask
 from .config import Config
 from .routes.task_routes import task_bp
 from .routes.auth_routes import auth_bp
+from .routes.health_routes import health_bp
+from flask_mail import Mail
+from . import redis_client
+from . import metrics
+from flask_swagger_ui import get_swaggerui_blueprint
+from flask_cors import CORS
 
 def create_app(test_config=None):
     # create and configure the app
@@ -13,6 +19,15 @@ def create_app(test_config=None):
     from . import db
     db.init_app(app)
 
+    # Initialize Redis
+    redis_client.init_redis(app)
+
+    # Initialize Metrics
+    metrics.init_metrics(app)
+
+    # Initialize Flask-Mail
+    Mail(app)
+
     # a simple page that says hello
     @app.route('/hello')
     def hello():
@@ -21,8 +36,25 @@ def create_app(test_config=None):
     # Register blueprints
     app.register_blueprint(task_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(health_bp)
     
-    # Lista as rotas
+    # Swagger UI
+    SWAGGER_URL = '/api/docs'
+    API_URL = '/static/swagger.json'
+    swagger_bp = get_swaggerui_blueprint(
+        SWAGGER_URL,
+        API_URL,
+        config={'app_name': "Task Manager API"}
+    )
+    app.register_blueprint(swagger_bp, url_prefix=SWAGGER_URL)
+    
+    # List as rotas
     # for rule in app.url_map.iter_rules():
     #     print(f"Endpoint: {rule.endpoint}\nURL: {rule.rule}")
+
+    CORS(app, resources={
+        r"/auth/*": {"origins": ["http://localhost:3000"]},
+        r"/task/*": {"origins": ["http://localhost:3000"]}
+    })
+
     return app
