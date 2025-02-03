@@ -1,29 +1,8 @@
-version: "3.8"
-
 services:
-  web:
-    build: .
-    ports:
-      - "5000:5000"
-    environment:
-      - FLASK_APP=flaskr
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
-      - PYTHONPATH=/app
-    env_file:
-      - .env
-    depends_on:
-      - redis
-      - mongo
-    networks:
-      - app-network
-
   redis:
-    image: redis:latest
+    image: redis:alpine
     ports:
       - "6379:6379"
-    volumes:
-      - redis-data:/data
     networks:
       - app-network
 
@@ -31,29 +10,29 @@ services:
     image: mongo:latest
     ports:
       - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
     volumes:
-      - mongo-data:/data/db
+      - mongodb_data:/data/db
     networks:
       - app-network
 
-  mongo-backup:
-    image: mongo:latest
-    volumes:
-      - mongo-data:/data/db
-      - ./backups:/backups
-    command: >
-      /bin/sh -c '
-        while true; do
-          mongodump --host mongo --out /backups/$(date +%Y%m%d);
-          sleep 86400;
-        done
-      '
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=flaskr
+      - FLASK_ENV=development
+    depends_on:
+      - redis
+      - mongo
     networks:
       - app-network
 
 volumes:
-  redis-data:
-  mongo-data:
+  mongodb_data:
 
 networks:
   app-network:
