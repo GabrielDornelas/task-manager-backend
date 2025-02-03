@@ -3,12 +3,12 @@ from ..models.task import Task
 from ..views.task_view import task_response, tasks_list_response
 from .auth_controller import get_logged_user_id
 from datetime import datetime
-from ..redis_client import (
+from ..infra.redis_client import (
     cache_task, get_cached_task, cache_task_list,
     get_cached_task_list, invalidate_task_cache,
     invalidate_user_task_list
 )
-from ..metrics import monitor_endpoint
+from ..infra.metrics import monitor_endpoint
 
 def get_task_from_request(request):
     data = request.get_json()

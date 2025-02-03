@@ -1,8 +1,8 @@
 from werkzeug.security import check_password_hash, generate_password_hash
-from ..db import get_db
+from ..infra.db import get_db
 from bson.objectid import ObjectId
 from pymongo.errors import DuplicateKeyError
-from ..redis_client import (
+from ..infra.redis_client import (
     cache_user, get_cached_user, invalidate_user_cache,
     cache_with_prefix, get_cached_with_prefix
 )

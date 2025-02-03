@@ -1,6 +1,6 @@
 from datetime import datetime
 from ..models.task import Task
-from ..metrics import update_task_status_metrics
+from ..infra.metrics import update_task_status_metrics
 from typing import Dict
 
 def calculate_task_stats(user_id: str) -> Dict:

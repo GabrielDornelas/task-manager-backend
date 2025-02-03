@@ -1,12 +1,12 @@
 import os
 from flask import Flask
-from .config import Config
+from .infra.config import Config
 from .routes.task_routes import task_bp
 from .routes.auth_routes import auth_bp
 from .routes.health_routes import health_bp
 from flask_mail import Mail
-from . import redis_client
-from . import metrics
+from .infra import redis_client
+from .infra import metrics
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_cors import CORS
 
@@ -16,7 +16,7 @@ def create_app(test_config=None):
     app.config.from_object(Config)
 
     # Initialize database
-    from . import db
+    from .infra import db
     db.init_app(app)
 
     # Initialize Redis

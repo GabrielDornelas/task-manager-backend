@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
-from ..db import get_db
-from ..redis_client import get_redis
+from ..infra.db import get_db
+from ..infra.redis_client import get_redis
 
 health_bp = Blueprint('health', __name__)
 

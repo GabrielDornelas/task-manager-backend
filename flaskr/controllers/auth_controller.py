@@ -3,13 +3,13 @@ import jwt
 import datetime
 from flask import jsonify, request, g, current_app
 from ..models.user import User
-from ..redis_client import (
+from ..infra.redis_client import (
     store_jwt_token, invalidate_jwt_token, is_token_valid,
     store_reset_token
 )
 import os
 from flask_mail import Mail, Message
-from ..metrics import metrics
+from ..infra.metrics import metrics
 
 # Chave secreta para assinar o token JWT
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev')

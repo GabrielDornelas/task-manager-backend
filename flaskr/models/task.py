@@ -1,5 +1,5 @@
 from bson import ObjectId
-from ..db import get_db
+from ..infra.db import get_db
 
 class Task:
     def __init__(self, title, description, status, expire_date, user_id, _id=None):
