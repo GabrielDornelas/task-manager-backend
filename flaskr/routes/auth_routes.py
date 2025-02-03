@@ -1,5 +1,5 @@
 # auth_routes.py
-from flask import Blueprint, jsonify
+from flask import Blueprint
 
 from ..controllers.auth_controller import (
     login_required, register, login, logout, 
