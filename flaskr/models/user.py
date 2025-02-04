@@ -47,8 +47,18 @@ class User:
         # Se não estiver em cache, buscar no banco
         db = get_db()
         user_data = db['users'].find_one({'username': username})
+        
+        import sys
+        print(f"DEBUG: Buscando usuário: {username}", file=sys.stderr)
+        print(f"DEBUG: Dados encontrados: {user_data}", file=sys.stderr)
+        
         if user_data:
-            user = cls(**user_data)
+            user = cls(
+                username=user_data['username'],
+                password=user_data['password'],
+                email=user_data['email'],
+                _id=user_data['_id']
+            )
             # Armazenar em cache
             cache_with_prefix('username', username, {'id': str(user._id)})
             return user

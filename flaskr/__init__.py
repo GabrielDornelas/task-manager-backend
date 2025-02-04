@@ -6,7 +6,6 @@ from .routes.auth_routes import auth_bp
 from .routes.health_routes import health_bp
 from flask_mail import Mail
 from .infra import redis_client
-from .infra import metrics
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_cors import CORS
 
@@ -21,9 +20,6 @@ def create_app(test_config=None):
 
     # Initialize Redis
     redis_client.init_redis(app)
-
-    # Initialize Metrics
-    metrics.init_metrics(app)
 
     # Initialize Flask-Mail
     Mail(app)

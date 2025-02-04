@@ -8,7 +8,6 @@ from ..infra.redis_client import (
     get_cached_task_list, invalidate_task_cache,
     invalidate_user_task_list
 )
-from ..infra.metrics import monitor_endpoint
 
 def get_task_from_request(request):
     data = request.get_json()
@@ -16,6 +15,10 @@ def get_task_from_request(request):
     description = data.get("description")
     status = data.get("status")
     expire_date = data.get("expire_date")
+
+    import sys
+    print(f"DEBUG: g.user._id: {g.user._id}", file=sys.stderr)
+    print(f"DEBUG: tipo do g.user._id: {type(g.user._id)}", file=sys.stderr)
 
     return {
         'title': title,
@@ -25,7 +28,6 @@ def get_task_from_request(request):
         'user_id': g.user._id
     }
 
-@monitor_endpoint()
 def get_task(id):
     # Tentar pegar do cache primeiro
     cached_task = get_cached_task(id)
@@ -41,7 +43,6 @@ def get_task(id):
     cache_task(id, task_data)
     return jsonify(task_data), 200
 
-@monitor_endpoint()
 def get_all_tasks():
     user_id = str(get_logged_user_id())
     
@@ -63,9 +64,11 @@ def is_the_user_task(id):
         return True
     return False
 
-@monitor_endpoint()
 def create_new_task():
     task_data = get_task_from_request(request)
+    
+    import sys
+    print(f"DEBUG: Task data antes de criar: {task_data}", file=sys.stderr)
     
     # Validar dados
     if not task_data['title']:
@@ -93,7 +96,6 @@ def create_new_task():
     
     return jsonify({"message": "Task created", "id": str(task_id)}), 201
 
-@monitor_endpoint()
 def update_existing_task(id):
     if not is_the_user_task(id):
         return jsonify({"error": "Not user's task"}), 403
@@ -130,7 +132,6 @@ def update_existing_task(id):
     
     return jsonify({"message": "Task updated successfully"}), 204
 
-@monitor_endpoint()
 def delete_existing_task(id):
     if not is_the_user_task(id):
         return jsonify({"error": "Not user's task"}), 403

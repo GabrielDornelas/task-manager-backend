@@ -9,7 +9,6 @@ from ..infra.redis_client import (
 )
 import os
 from flask_mail import Mail, Message
-from ..infra.metrics import metrics
 
 # Chave secreta para assinar o token JWT
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev')
@@ -75,20 +74,7 @@ def register():
     new_user = User.create(username, password, email)
     if new_user:
         # Incrementar contador de registro
-        if metrics:
-            metrics.counter(
-                'user_register_total',
-                'Total number of user registrations',
-                labels={'status': 'success'}
-            ).inc()
         return jsonify({"message": "User registered successfully!"}), 201
-    
-    if metrics:
-        metrics.counter(
-            'user_register_total',
-            'Total number of user registrations',
-            labels={'status': 'failed'}
-        ).inc()
     return jsonify({"error": "User registration failed"}), 400
 
 def login():
@@ -98,31 +84,11 @@ def login():
     password = data.get('password')
 
     if not username or not password:
-        if metrics:
-            metrics.counter(
-                'user_login_total',
-                'Total number of user logins',
-                labels={'status': 'failed'}
-            ).inc()
         return jsonify({"error": "Username and password are required."}), 400
 
     user = User.get_by_username(username)
     if user is None or not user.check_password(password):
-        if metrics:
-            metrics.counter(
-                'user_login_total',
-                'Total number of user logins',
-                labels={'status': 'failed'}
-            ).inc()
         return jsonify({"error": "Invalid username or password."}), 401
-
-    # Incrementar contador de login
-    if metrics:
-        metrics.counter(
-            'user_login_total',
-            'Total number of user logins',
-            labels={'status': 'success'}
-        ).inc()
 
     # Gerar o JWT
     expiration_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_EXPIRATION)
@@ -193,25 +159,12 @@ def request_password_reset():
 
     try:
         send_password_reset_email(user, reset_link)
-        # Incrementar contador de reset de senha
-        if metrics:
-            metrics.counter(
-                'password_reset_total',
-                'Total number of password reset requests',
-                labels={'status': 'success'}
-            ).inc()
         return jsonify({
             "message": "Password reset instructions sent to your email",
             "token": reset_token
         }), 200
     except Exception as e:
         print(f"Erro ao enviar email: {e}")
-        if metrics:
-            metrics.counter(
-                'password_reset_total',
-                'Total number of password reset requests',
-                labels={'status': 'failed'}
-            ).inc()
         return jsonify({"error": "Failed to send reset email"}), 500
 
 def reset_password():
