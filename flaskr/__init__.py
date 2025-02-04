@@ -9,7 +9,7 @@ from .routes.auth_routes import auth_bp
 from .routes.health_routes import health_bp
 from .routes.metrics_routes import metrics_bp
 from flask_mail import Mail
-from .infra import redis_client
+from .infra import redis_client, db
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_cors import CORS
 
@@ -18,8 +18,22 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(Config)
 
+    # Configuração CORS
+    app.config['CORS_HEADERS'] = 'Content-Type'
+    CORS(app, 
+         resources={r"/*": {
+             "origins": ["http://localhost:8080"],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": [
+                 "Content-Type", 
+                 "Authorization",
+                 "Cache-Control",
+                 "Pragma"
+             ],
+             "supports_credentials": True
+         }})
+
     # Initialize database
-    from .infra import db
     db.init_app(app)
 
     # Initialize Redis
@@ -48,10 +62,5 @@ def create_app(test_config=None):
         config={'app_name': "Task Manager API"}
     )
     app.register_blueprint(swagger_bp, url_prefix=SWAGGER_URL)
-
-    CORS(app, resources={
-        r"/auth/*": {"origins": ["http://localhost:3000"]},
-        r"/task/*": {"origins": ["http://localhost:3000"]}
-    })
 
     return app
