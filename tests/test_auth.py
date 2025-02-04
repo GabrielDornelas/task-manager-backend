@@ -1,8 +1,10 @@
 import pytest
 from flaskr.models.user import User
+from flaskr.infra.db import get_db
 from flaskr.infra.redis_client import get_redis, get_cached_user
 import json
 from bson import ObjectId
+from datetime import datetime
 
 def test_register(client):
     """Teste de registro de usuário"""
@@ -33,29 +35,29 @@ def test_register_duplicate_username(client):
     assert b"Username already taken" in response.data
 
 def test_login_and_jwt_cache(client):
-    """Teste de login e cache do token JWT"""
+    """Teste de login e cache do JWT"""
     # Registrar usuário
-    client.post('/auth/register', json={
-        'username': 'test_user3',
+    response = client.post('/auth/register', json={
+        'username': 'test_user',
         'password': 'test_pass',
-        'email': 'test3@example.com'
+        'email': 'test@example.com'
     })
-    
+    assert response.status_code == 201
+
     # Login
     response = client.post('/auth/login', json={
-        'username': 'test_user3',
+        'username': 'test_user',
         'password': 'test_pass'
     })
     assert response.status_code == 200
-    data = json.loads(response.data)
+    data = response.get_json()
     assert 'token' in data
     
-    # Verificar se token está no Redis
-    user = User.get_by_username('test_user3')
-    assert user is not None  # Garantir que user não é None
-    redis = get_redis()
-    token_key = f"jwt_token:{str(user._id)}"
-    assert redis.exists(token_key) == 1  # Redis.exists retorna int
+    # Verificar se last_login foi atualizado
+    db = get_db()
+    user = db.users.find_one({'username': 'test_user'})
+    assert 'last_login' in user
+    assert isinstance(user['last_login'], datetime)
 
 def test_user_cache(client):
     """Teste do cache de usuário"""

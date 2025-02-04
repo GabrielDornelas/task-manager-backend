@@ -4,11 +4,9 @@ from flask import Flask
 from typing import Generator
 from flaskr.infra.db import get_db
 from flaskr.infra.redis_client import get_redis
+from datetime import datetime, timedelta
+from bson import ObjectId
 
-# Ignorar warning específico do monkey-patch
-@pytest.mark.filterwarnings("ignore::gevent.monkey.MonkeyPatchWarning")
-def pytest_configure(config):
-    pass
 
 @pytest.fixture
 def app() -> Flask:
@@ -65,4 +63,14 @@ def auth_headers(client):
 @pytest.fixture
 def runner(app: Flask):
     """Runner de CLI para testes"""
-    return app.test_cli_runner() 
+    return app.test_cli_runner()
+
+@pytest.fixture
+def sample_task():
+    """Fixture que retorna uma task de exemplo"""
+    return {
+        'title': 'Test Task',
+        'description': 'Test Description',
+        'status': 'pending',
+        'expire_date': (datetime.utcnow() + timedelta(days=1)).isoformat()
+    } 

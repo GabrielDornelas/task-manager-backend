@@ -1,6 +1,8 @@
 import pytest
 import json
 from datetime import datetime, timedelta
+from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 @pytest.fixture
 def auth_headers(client):
@@ -33,13 +35,17 @@ def sample_task():
 
 def test_create_task(client, auth_headers, sample_task):
     """Teste de criação de task"""
-    response = client.post(
-        '/task',
-        headers=auth_headers,
-        json=sample_task
-    )
+    response = client.post('/task', headers=auth_headers, json=sample_task)
     assert response.status_code == 201
-    assert b"Task created" in response.data
+    
+    # Verificar se created_at foi definido
+    data = response.get_json()
+    task_id = data['id']
+    
+    db = get_db()
+    task = db.tasks.find_one({'_id': ObjectId(task_id)})
+    assert 'created_at' in task
+    assert isinstance(task['created_at'], datetime)
 
 def test_get_tasks(client, auth_headers, sample_task):
     """Teste de listagem de tasks"""

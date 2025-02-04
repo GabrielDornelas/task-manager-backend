@@ -1,5 +1,11 @@
 import pytest
 from datetime import datetime, timedelta
+from bson import ObjectId
+
+def test_metrics_endpoint_requires_auth(client):
+    """Teste de acesso não autorizado às métricas"""
+    response = client.get('/metrics')
+    assert response.status_code == 401
 
 def test_metrics_endpoint(client, auth_headers):
     """Teste do endpoint de métricas"""
@@ -19,7 +25,7 @@ def test_metrics_endpoint(client, auth_headers):
     client.post('/task', headers=auth_headers, json=sample_task)
     
     # Testar endpoint de métricas
-    response = client.get('/metrics')
+    response = client.get('/metrics', headers=auth_headers)
     assert response.status_code == 200
     
     data = response.get_json()
@@ -32,4 +38,7 @@ def test_metrics_endpoint(client, auth_headers):
     # Verificar contagem de tasks
     assert data['tasks_by_status']['pending'] == 1
     assert data['tasks_by_status']['in_progress'] == 1
-    assert data['tasks_by_status']['completed'] == 1 
+    assert data['tasks_by_status']['completed'] == 1
+    
+    # Verificar usuários ativos
+    assert data['active_users'] >= 1  # Pelo menos o usuário do teste 
