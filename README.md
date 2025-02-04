@@ -31,7 +31,7 @@ API RESTful para gerenciamento de tarefas com autenticação JWT, desenvolvida c
 
 1. Clone o repositório:
 
-git clone https://github.com/seu-usuario/task-manager-backend.git
+git clone https://github.com/GabrielDornelas/task-manager-backend.git
 cd task-manager-backend
 
 2. Configure as variáveis de ambiente:
@@ -99,18 +99,20 @@ docker-compose exec app python -m pytest tests/ -v
 
 ## 📦 Estrutura do Projeto
 
-task-manager-backend/
-├── flaskr/ # Código fonte
-│ ├── controllers/ # Controladores
-│ ├── models/ # Modelos
-│ ├── routes/ # Rotas
-│ ├── infra/ # Infraestrutura (DB, Redis, etc)
-│ └── init.py # Inicialização do app
-├── tests/ # Testes
-├── docker/ # Arquivos Docker
-├── .env.example # Template de variáveis de ambiente
-├── build.sh # Script de build
-└── docker-compose.yml # Configuração Docker Compose
+task-manager-backend/<br>
+├── flaskr/ # Código fonte<br>
+│ ├── controllers/ # Controladores<br>
+│ ├── models/ # Modelos<br>
+│ ├── routes/ # Rotas<br>
+│ ├── infra/ # Infraestrutura (DB, Redis, etc)<br>
+│ └── init.py # Inicialização do app<br>
+├── tests/ # Testes<br>
+├── Dockerfile # Arquivo Docker<br>
+├── .env.example # Template de variáveis de ambiente<br>
+├── build.sh # Script de build<br>
+├── run.sh # Script de run<br>
+├── test.sh # Script de testes<br>
+└── docker-compose.yml # Configuração Docker Compose<br>
 
 ## 🔐 Variáveis de Ambiente
 
