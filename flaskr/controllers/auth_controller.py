@@ -5,11 +5,13 @@ from flask import jsonify, request, g, current_app
 from ..models.user import User
 from ..infra.redis_client import (
     store_jwt_token, invalidate_jwt_token, is_token_valid,
-    store_reset_token
+    store_reset_token, cache_user
 )
 
 import os
 from flask_mail import Mail, Message
+from datetime import datetime, timedelta
+from ..infra.db import get_db
 
 # Chave secreta para assinar o token JWT
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev')
@@ -27,6 +29,10 @@ def login_required(view):
             # Extrair token do header Bearer
             token = auth_header.split(' ')[1] if ' ' in auth_header else auth_header
             
+            # Verificar se token está na blacklist
+            if not is_token_valid(token):
+                return jsonify({"error": "Token invalidated"}), 401
+            
             # Decodificar token
             payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
             user_id = payload['user_id']
@@ -39,8 +45,10 @@ def login_required(view):
             # Setar usuário no contexto
             g.user = user
             return view(**kwargs)
-        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
-            return jsonify({"error": "Invalid or expired token"}), 401
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token expired"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Invalid token"}), 401
         except Exception as e:
             return jsonify({"error": str(e)}), 401
             
@@ -112,18 +120,28 @@ def login():
     if user is None or not user.check_password(password):
         return jsonify({"error": "Invalid username or password"}), 401
 
+    # Atualizar last_login
+    db = get_db()
+    db.users.update_one(
+        {'_id': user._id},
+        {'$set': {'last_login': datetime.utcnow()}}
+    )
+
     # Gerar token JWT
     token = jwt.encode(
         {
             'user_id': str(user._id),
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_EXPIRATION)
+            'exp': datetime.utcnow() + timedelta(seconds=JWT_EXPIRATION)
         },
         SECRET_KEY,
         algorithm='HS256'
     )
 
     # Armazenar token no Redis
-    store_jwt_token(str(user._id), token, JWT_EXPIRATION)
+    store_jwt_token(str(user._id), token)
+    
+    # Armazenar usuário no cache
+    cache_user(str(user._id), user.to_dict())
 
     return jsonify({
         "token": token,
@@ -157,38 +175,31 @@ def request_password_reset():
     """Rota para solicitar redefinição de senha"""
     data = request.get_json()
     email = data.get('email')
-
+    
     if not email:
         return jsonify({"error": "Email is required"}), 400
-
+        
     user = User.get_by_email(email)
     if not user:
         return jsonify({"error": "Email not found"}), 404
-
+        
     # Gerar token de reset
     reset_token = jwt.encode(
         {
             'user_id': str(user._id),
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+            'exp': datetime.utcnow() + timedelta(hours=1)
         },
         SECRET_KEY,
         algorithm='HS256'
     )
-
+    
     # Armazenar token no Redis
     store_reset_token(str(user._id), reset_token)
-
-    reset_link = f"Seu token de reset: {reset_token}"
-
-    try:
-        send_password_reset_email(user, reset_link)
-        return jsonify({
-            "message": "Password reset instructions sent to your email",
-            "token": reset_token
-        }), 200
-    except Exception as e:
-        print(f"Erro ao enviar email: {e}")
-        return jsonify({"error": "Failed to send reset email"}), 500
+    
+    return jsonify({
+        "message": "Password reset requested",
+        "token": reset_token
+    }), 200
 
 def reset_password():
     """Rota para resetar a senha usando o token"""

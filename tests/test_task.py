@@ -3,6 +3,7 @@ import json
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+from flaskr.infra.db import get_db
 
 @pytest.fixture
 def auth_headers(client):

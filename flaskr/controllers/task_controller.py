@@ -40,39 +40,53 @@ def get_all_tasks():
     return jsonify(tasks_data), 200
 
 @login_required
-def create_new_task():
-    try:
-        data = request.get_json()
+def create_task():
+    """Criar uma nova task"""
+    data = request.get_json()
+    
+    # Validar dados
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
         
-        # Validar dados
-        if not data.get('title'):
-            return jsonify({"error": "Title is required"}), 400
+    # Validar campos obrigatórios
+    if not all(k in data for k in ['title', 'description', 'status']):
+        return jsonify({'error': 'Missing required fields'}), 400
         
-        if data.get('status') and data.get('status') not in ['pending', 'in_progress', 'completed']:
-            return jsonify({"error": "Invalid status"}), 400
+    # Validar título não vazio
+    if not data['title'].strip():
+        return jsonify({'error': 'Title cannot be empty'}), 400
         
-        if data.get('expire_date'):
-            try:
-                datetime.fromisoformat(data['expire_date'])
-            except (ValueError, TypeError):
-                return jsonify({"error": "Invalid expire_date format"}), 400
-
-        task = Task(
-            title=data['title'],
-            description=data.get('description', ''),
-            status=data.get('status', 'pending'),
-            expire_date=data.get('expire_date'),
-            user_id=g.user._id
-        )
-        task_id = task.save()
+    # Validar status
+    valid_status = ['pending', 'in_progress', 'completed']
+    if data['status'] not in valid_status:
+        return jsonify({'error': f'Invalid status. Must be one of: {", ".join(valid_status)}'}), 400
         
-        if not task_id:
-            return jsonify({"error": "Error creating task"}), 500
-        
-        return jsonify({"message": "Task created", "id": str(task_id)}), 201
-    except Exception as e:
-        print(f"DEBUG: Erro ao criar task: {str(e)}", file=sys.stderr)
-        return jsonify({"error": "Internal server error"}), 500
+    # Validar data de expiração
+    if data.get('expire_date'):
+        try:
+            datetime.fromisoformat(data['expire_date'])
+        except ValueError:
+            return jsonify({'error': 'Invalid expire_date format'}), 400
+    
+    # Criar task
+    task = Task(
+        title=data['title'],
+        description=data['description'],
+        status=data['status'],
+        expire_date=data.get('expire_date'),
+        user_id=g.user._id
+    )
+    
+    # Salvar
+    task_id = task.save()
+    if task_id:
+        return jsonify({
+            'message': 'Task created',
+            'id': str(task_id),
+            'task': task.to_dict()
+        }), 201
+    
+    return jsonify({'error': 'Failed to create task'}), 400
 
 @login_required
 def update_task(task_id):

@@ -109,7 +109,8 @@ class Task:
             'description': self.description,
             'status': self.status,
             'expire_date': self.expire_date,
-            'user_id': str(self.user_id)
+            'user_id': str(self.user_id),
+            'created_at': self.created_at.isoformat() if hasattr(self, 'created_at') else None
         }
 
     def update(self, data):

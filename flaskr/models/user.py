@@ -9,10 +9,11 @@ from ..infra.redis_client import (
 from datetime import datetime, timedelta
 
 class User:
-    def __init__(self, username, password=None, email=None, _id=None):
+    def __init__(self, username, password=None, email=None, _id=None, last_login=None):
         self._id = _id
         self.username = username
         self.email = email
+        self.last_login = last_login
         
         # Se password for fornecido e não estiver hasheado, faz o hash
         if password and not (password.startswith('scrypt:') or password.startswith('pbkdf2:sha256:')):
@@ -29,44 +30,31 @@ class User:
             return cls(
                 username=cached_data['username'],
                 email=cached_data['email'],
-                _id=ObjectId(cached_data['id'])
+                _id=ObjectId(cached_data['id']),
+                last_login=cached_data.get('last_login')
             )
 
         # Se não estiver em cache, buscar no banco
         db = get_db()
         user_data = db['users'].find_one({'_id': ObjectId(id)})
         if user_data:
-            user = cls(**user_data)
-            # Armazenar em cache
-            cache_user(str(user._id), user.to_dict())
-            return user
+            return cls(**user_data)
         return None
     
     @classmethod
     def get_by_username(cls, username):
         """Busca um usuário pelo username, usando cache"""
-        # Tentar recuperar do cache
-        cached_data = get_cached_with_prefix('username', username)
-        if cached_data:
-            return cls.get_by_id(cached_data['id'])
-
-        # Se não estiver em cache, buscar no banco
         db = get_db()
         user_data = db['users'].find_one({'username': username})
-        
-        import sys
-        print(f"DEBUG: Buscando usuário: {username}", file=sys.stderr)
-        print(f"DEBUG: Dados encontrados: {user_data}", file=sys.stderr)
         
         if user_data:
             user = cls(
                 username=user_data['username'],
                 password=user_data['password'],
                 email=user_data['email'],
-                _id=user_data['_id']
+                _id=user_data['_id'],
+                last_login=user_data.get('last_login')
             )
-            # Armazenar em cache
-            cache_with_prefix('username', username, {'id': str(user._id)})
             return user
         return None
 
@@ -112,7 +100,8 @@ class User:
         return {
             'id': str(self._id),
             'username': self.username,
-            'email': self.email
+            'email': self.email,
+            'last_login': self.last_login.isoformat() if self.last_login else None
         }
 
     def save(self):

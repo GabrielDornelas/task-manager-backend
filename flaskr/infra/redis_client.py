@@ -19,11 +19,15 @@ def init_redis(app):
     """Inicializa o Redis com a aplicação"""
     app.teardown_appcontext(close_redis)
 
-def store_jwt_token(user_id: str, token: str, expires_in: int) -> None:
-    """Armazena o token JWT no Redis"""
+def store_jwt_token(user_id, token, expiration=300):
+    """Armazena token JWT no Redis"""
     redis = get_redis()
     key = f"jwt_token:{user_id}"
-    redis.setex(key, expires_in, token)
+    redis.set(key, token, ex=expiration)
+    
+    # Também armazenar o token reverso para blacklist
+    token_key = f"token:{token}"
+    redis.set(token_key, user_id, ex=expiration)
 
 def invalidate_jwt_token(user_id: str) -> None:
     """Invalida um token JWT no Redis"""
@@ -31,12 +35,11 @@ def invalidate_jwt_token(user_id: str) -> None:
     key = f"jwt_token:{user_id}"
     redis.delete(key)
 
-def is_token_valid(user_id: str, token: str) -> bool:
-    """Verifica se um token JWT é válido no Redis"""
+def is_token_valid(token):
+    """Verifica se o token está válido no Redis"""
     redis = get_redis()
-    key = f"jwt_token:{user_id}"
-    stored_token = cast(Optional[bytes], redis.get(key))
-    return bool(stored_token and stored_token.decode('utf-8') == token)
+    token_key = f"token:{token}"
+    return redis.exists(token_key)
 
 def store_reset_token(user_id: str, token: str) -> None:
     """Armazena o token de reset de senha no Redis"""

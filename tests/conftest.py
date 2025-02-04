@@ -6,6 +6,7 @@ from flaskr.infra.db import get_db
 from flaskr.infra.redis_client import get_redis
 from datetime import datetime, timedelta
 from bson import ObjectId
+from flaskr.models.user import User
 
 
 @pytest.fixture
@@ -58,6 +59,14 @@ def auth_headers(client):
     
     data = response.get_json()
     token = data['token']
+    
+    # Garantir que o token está no Redis
+    redis = get_redis()
+    user = User.get_by_username('task_user')
+    token_key = f"token:{token}"
+    if not redis.exists(token_key):
+        redis.set(token_key, str(user._id), ex=300)
+    
     return {'Authorization': f'Bearer {token}'}
 
 @pytest.fixture
