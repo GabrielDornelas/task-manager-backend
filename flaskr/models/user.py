@@ -6,6 +6,7 @@ from ..infra.redis_client import (
     cache_user, get_cached_user, invalidate_user_cache,
     cache_with_prefix, get_cached_with_prefix
 )
+from datetime import datetime, timedelta
 
 class User:
     def __init__(self, username, password=None, email=None, _id=None):
@@ -151,3 +152,16 @@ class User:
         except Exception as e:
             print(f"DEBUG: Erro ao salvar usuário: {str(e)}", file=sys.stderr)
             return None
+
+    @classmethod
+    def count_active_users(cls, hours=24):
+        """Conta usuários ativos nas últimas X horas"""
+        db = get_db()
+        since = datetime.utcnow() - timedelta(hours=hours)
+        
+        # Buscar usuários com login recente
+        count = db.users.count_documents({
+            'last_login': {'$gte': since}
+        })
+        
+        return count

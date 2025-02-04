@@ -1,5 +1,6 @@
 from bson import ObjectId
 from ..infra.db import get_db
+from datetime import datetime, timedelta
 
 class Task:
     def __init__(self, title, description, status, expire_date, user_id, _id=None):
@@ -122,3 +123,38 @@ class Task:
             self.expire_date = data['expire_date']
         
         return self.save()
+
+    @classmethod
+    def count_by_status(cls):
+        """Conta tasks por status"""
+        db = get_db()
+        pipeline = [
+            {'$group': {
+                '_id': '$status',
+                'count': {'$sum': 1}
+            }}
+        ]
+        
+        result = db.tasks.aggregate(pipeline)
+        counts = {doc['_id']: doc['count'] for doc in result}
+        
+        # Garantir que todos os status apareçam
+        all_status = {'pending': 0, 'in_progress': 0, 'completed': 0}
+        all_status.update(counts)
+        return all_status
+
+    @classmethod
+    def get_error_rate(cls, hours=24):
+        """Calcula taxa de erros nas últimas X horas"""
+        db = get_db()
+        since = datetime.utcnow() - timedelta(hours=hours)
+        
+        # Aqui você pode implementar sua lógica específica de erro
+        # Por exemplo, tasks que falharam ou foram canceladas
+        total = db.tasks.count_documents({'created_at': {'$gte': since}})
+        errors = db.tasks.count_documents({
+            'created_at': {'$gte': since},
+            'status': 'error'  # ou outro critério de erro
+        })
+        
+        return round(errors / total * 100, 2) if total > 0 else 0

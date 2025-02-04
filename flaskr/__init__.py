@@ -7,6 +7,7 @@ from .infra.config import Config
 from .routes.task_routes import task_bp
 from .routes.auth_routes import auth_bp
 from .routes.health_routes import health_bp
+from .routes.metrics_routes import metrics_bp
 from flask_mail import Mail
 from .infra import redis_client
 from flask_swagger_ui import get_swaggerui_blueprint
@@ -36,6 +37,7 @@ def create_app(test_config=None):
     app.register_blueprint(task_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(health_bp)
+    app.register_blueprint(metrics_bp)
     
     # Swagger UI
     SWAGGER_URL = '/api/docs'
