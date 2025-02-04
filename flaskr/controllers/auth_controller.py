@@ -18,82 +18,105 @@ def login_required(view):
     """ Decorador para exigir autenticação via JWT """
     @functools.wraps(view)
     def wrapped_view(**kwargs):
-        token = request.headers.get('Authorization')
-        if token:
-            try:
-                user = get_user_from_jwt(token)
-                g.user = user
-            except jwt.ExpiredSignatureError:
-                return jsonify({"error": "Token expired. Please log in again."}), 401
-            except jwt.InvalidTokenError:
-                return jsonify({"error": "Invalid token. Please provide a valid token."}), 401
-            except Exception:
-                g.user = None
-                return jsonify({"error": "Invalid token. Please provide a valid token."}), 401
-        else:
-            g.user = None
-            return jsonify({"error": "Token missing. Please provide an authentication token."}), 401
-        return view(**kwargs)
-
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({"error": "Token missing"}), 401
+            
+        try:
+            # Extrair token do header Bearer
+            token = auth_header.split(' ')[1] if ' ' in auth_header else auth_header
+            
+            # Decodificar token
+            payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+            user_id = payload['user_id']
+            
+            # Buscar usuário
+            user = User.get_by_id(user_id)
+            if not user:
+                return jsonify({"error": "User not found"}), 401
+                
+            # Setar usuário no contexto
+            g.user = user
+            return view(**kwargs)
+        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+            return jsonify({"error": "Invalid or expired token"}), 401
+        except Exception as e:
+            return jsonify({"error": str(e)}), 401
+            
     return wrapped_view
 
 def get_logged_user_id():
     """ Retorna o ID do usuário logado a partir do JWT """
-    if g.user:
+    if hasattr(g, 'user') and g.user:
         return g.user._id
-    token = request.headers.get('Authorization')
-    if token:
-        try:
-            user = get_user_from_jwt(token)
+        
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return None
+        
+    try:
+        # Extrair token do header Bearer
+        token = auth_header.split(' ')[1] if ' ' in auth_header else auth_header
+        
+        # Decodificar token
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        user_id = payload['user_id']
+        
+        # Buscar usuário
+        user = User.get_by_id(user_id)
+        if user:
             g.user = user
-        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as error:
-            g.user = None
-            raise (error)
-    else:
-        g.user = None
-    return g.user
+            return user._id
+    except:
+        pass
+        
+    return None
 
 def register():
-    """ Rota para registrar um usuário """
     data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    email = data.get('email')
-
-    if not username or not password or not email:
-        return jsonify({"error": "Username, password and email are required"}), 400
-
-    # Verifica se o username já existe
-    if User.get_by_username(username):
-        return jsonify({"error": "Username already taken"}), 400
-
-    # Verifica se o email já existe
-    if User.get_by_email(email):
-        return jsonify({"error": "Email already registered"}), 400
-
-    new_user = User.create(username, password, email)
-    if new_user:
-        # Incrementar contador de registro
-        return jsonify({"message": "User registered successfully!"}), 201
-    return jsonify({"error": "User registration failed"}), 400
+    
+    if not data or not all(k in data for k in ['username', 'password', 'email']):
+        return jsonify({'error': 'Username and password are required'}), 400
+    
+    # Verificar se usuário já existe
+    if User.get_by_username(data['username']):
+        return jsonify({'error': 'Username already taken'}), 400
+    
+    if User.get_by_email(data['email']):
+        return jsonify({'error': 'Email already registered'}), 400
+    
+    # Criar novo usuário
+    user = User(
+        username=data['username'],
+        password=data['password'],
+        email=data['email']
+    )
+    
+    # Tentar salvar
+    user_id = user.save()
+    if not user_id:
+        return jsonify({'error': 'User registration failed'}), 400
+        
+    return jsonify({'message': 'User registered successfully', 'id': user_id}), 201
 
 def login():
-    """Rota para autenticar um usuário e retornar um JWT"""
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
 
     if not username or not password:
-        return jsonify({"error": "Username and password are required."}), 400
+        return jsonify({"error": "Username and password are required"}), 400
 
     user = User.get_by_username(username)
     if user is None or not user.check_password(password):
-        return jsonify({"error": "Invalid username or password."}), 401
+        return jsonify({"error": "Invalid username or password"}), 401
 
-    # Gerar o JWT
-    expiration_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_EXPIRATION)
+    # Gerar token JWT
     token = jwt.encode(
-        {'user_id': str(user._id), 'exp': expiration_time},
+        {
+            'user_id': str(user._id),
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_EXPIRATION)
+        },
         SECRET_KEY,
         algorithm='HS256'
     )
@@ -102,7 +125,6 @@ def login():
     store_jwt_token(str(user._id), token, JWT_EXPIRATION)
 
     return jsonify({
-        "message": "Login successful",
         "token": token,
         "expires_in": JWT_EXPIRATION
     }), 200

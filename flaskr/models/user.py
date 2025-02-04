@@ -11,8 +11,13 @@ class User:
     def __init__(self, username, password=None, email=None, _id=None):
         self._id = _id
         self.username = username
-        self.password = password
         self.email = email
+        
+        # Se password for fornecido e não estiver hasheado, faz o hash
+        if password and not (password.startswith('scrypt:') or password.startswith('pbkdf2:sha256:')):
+            self.password = generate_password_hash(password)
+        else:
+            self.password = password
 
     @classmethod
     def get_by_id(cls, id):
@@ -65,22 +70,6 @@ class User:
         return None
 
     @classmethod
-    def create(cls, username, password, email):
-        """Cria um novo usuário"""
-        hashed_password = generate_password_hash(password)
-        db = get_db()
-        try:
-            user_data = {
-                "username": username,
-                "password": hashed_password,
-                "email": email
-            }
-            result = db['users'].insert_one(user_data)
-            return cls(username=username, password=hashed_password, email=email, _id=result.inserted_id)
-        except DuplicateKeyError:
-            return None
-
-    @classmethod
     def get_by_email(cls, email):
         """Busca um usuário pelo email"""
         db = get_db()
@@ -91,7 +80,16 @@ class User:
 
     def check_password(self, password):
         """Verifica se a senha fornecida é válida"""
-        return check_password_hash(self.password, password) # type: ignore
+        import sys
+        print(f"DEBUG: Verificando senha para usuário: {self.username}", file=sys.stderr)
+        print(f"DEBUG: Hash armazenado: {self.password}", file=sys.stderr)
+        print(f"DEBUG: Senha fornecida: {password}", file=sys.stderr)
+        
+        if not self.password:
+            print("DEBUG: ERRO - Password está None!", file=sys.stderr)
+            return False
+        
+        return check_password_hash(self.password, password)
 
     def update_password(self, new_password):
         """Atualiza a senha do usuário e invalida cache"""
@@ -115,3 +113,41 @@ class User:
             'username': self.username,
             'email': self.email
         }
+
+    def save(self):
+        db = get_db()
+        users_collection = db["users"]
+        
+        # Verificar se já existe usuário com mesmo username ou email
+        if not self._id:  # Apenas verifica duplicatas para novos usuários
+            existing_user = users_collection.find_one({
+                "$or": [
+                    {"username": self.username},
+                    {"email": self.email}
+                ]
+            })
+            if existing_user:
+                return None
+        
+        # Garantir que o password seja hasheado antes de salvar
+        if self.password and not self.password.startswith('scrypt:'):
+            self.password = generate_password_hash(self.password)
+        
+        user_data = {
+            "username": self.username,
+            "password": self.password,
+            "email": self.email
+        }
+        
+        try:
+            if hasattr(self, '_id') and self._id:
+                filter = {"_id": ObjectId(self._id)}
+                result = users_collection.replace_one(filter, user_data, upsert=True)
+            else:
+                result = users_collection.insert_one(user_data)
+                self._id = str(result.inserted_id)
+            
+            return self._id
+        except Exception as e:
+            print(f"DEBUG: Erro ao salvar usuário: {str(e)}", file=sys.stderr)
+            return None

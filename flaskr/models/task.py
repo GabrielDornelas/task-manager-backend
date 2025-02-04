@@ -3,12 +3,12 @@ from ..infra.db import get_db
 
 class Task:
     def __init__(self, title, description, status, expire_date, user_id, _id=None):
-        self._id = _id if _id else str(ObjectId())
+        self._id = str(_id) if _id else None
         self.title = title
         self.description = description
         self.status = status
         self.expire_date = expire_date
-        self.user_id = user_id
+        self.user_id = str(user_id) if user_id else None
 
     def save(self):
         db = get_db()
@@ -18,40 +18,31 @@ class Task:
         print(f"DEBUG: Salvando task com user_id: {self.user_id}", file=sys.stderr)
         print(f"DEBUG: Tipo do user_id: {type(self.user_id)}", file=sys.stderr)
         
-        # Primeiro, vamos verificar se o _id já existe
-        if hasattr(self, '_id') and self._id:
-            task_id = ObjectId(self._id)
-        else:
-            task_id = ObjectId()
-            self._id = str(task_id)
-        
         task_data = {
-            "_id": task_id,
             "title": self.title,
             "description": self.description,
             "status": self.status,
             "expire_date": self.expire_date,
-            "user_id": ObjectId(self.user_id)  # Converter para ObjectId ao salvar
+            "user_id": ObjectId(self.user_id)
         }
         
         print(f"DEBUG: Task data para salvar: {task_data}", file=sys.stderr)
         
         try:
-            if not hasattr(self, '_id') or not self._id:  # Se não tiver _id, é uma nova task
+            if self._id:  # Update
+                task_id = ObjectId(self._id)
+                result = tasks_collection.replace_one(
+                    {"_id": task_id},
+                    task_data
+                )
+            else:  # Insert
                 result = tasks_collection.insert_one(task_data)
-                print(f"DEBUG: Nova task criada com ID: {result.inserted_id}", file=sys.stderr)
-            else:
-                filter = {"_id": task_id}
-                # Remover o _id do update para evitar erro
-                update_data = task_data.copy()
-                del update_data["_id"]
-                result = tasks_collection.replace_one(filter, update_data, upsert=True)
-                print(f"DEBUG: Task atualizada: {self._id} (matched: {result.matched_count}, modified: {result.modified_count}, upserted: {result.upserted_id})", file=sys.stderr)
+                self._id = str(result.inserted_id)
             
             return self._id
         except Exception as e:
             print(f"DEBUG: Erro ao salvar task: {str(e)}", file=sys.stderr)
-            raise
+            return None
 
     def delete(self):
         db = get_db()
@@ -59,27 +50,23 @@ class Task:
         result = tasks_collection.delete_one({"_id": ObjectId(self._id)})
         return result.deleted_count > 0
 
-    @staticmethod
-    def get_by_id(id):
+    @classmethod
+    def get_by_id(cls, id):
+        """Busca uma task pelo ID"""
         db = get_db()
-        tasks_collection = db["tasks"]
-        
-        import sys
-        print(f"DEBUG: Buscando task por ID: {id}", file=sys.stderr)
-        
-        task_data = tasks_collection.find_one({"_id": ObjectId(id)})
-        
-        print(f"DEBUG: Task encontrada: {task_data}", file=sys.stderr)
-        
-        if task_data:
-            return Task(
-                title=task_data['title'],
-                description=task_data['description'],
-                status=task_data['status'],
-                expire_date=task_data['expire_date'],
-                user_id=str(task_data['user_id']),  # Converter para string ao retornar
-                _id=str(task_data['_id'])  # Converter para string ao retornar
-            )
+        try:
+            task_data = db['tasks'].find_one({'_id': ObjectId(id)})
+            if task_data:
+                return cls(
+                    title=task_data['title'],
+                    description=task_data['description'],
+                    status=task_data['status'],
+                    expire_date=task_data['expire_date'],
+                    user_id=str(task_data['user_id']),
+                    _id=str(task_data['_id'])
+                )
+        except Exception as e:
+            print(f"DEBUG: Erro ao buscar task: {str(e)}", file=sys.stderr)
         return None
 
     @staticmethod
@@ -111,3 +98,27 @@ class Task:
         
         print(f"DEBUG: Total de tasks encontradas: {len(tasks)}", file=sys.stderr)
         return tasks
+
+    def to_dict(self):
+        """Converte a task para dicionário"""
+        return {
+            'id': str(self._id),
+            'title': self.title,
+            'description': self.description,
+            'status': self.status,
+            'expire_date': self.expire_date,
+            'user_id': str(self.user_id)
+        }
+
+    def update(self, data):
+        """Atualiza os dados da task"""
+        if 'title' in data:
+            self.title = data['title']
+        if 'description' in data:
+            self.description = data['description']
+        if 'status' in data:
+            self.status = data['status']
+        if 'expire_date' in data:
+            self.expire_date = data['expire_date']
+        
+        return self.save()
