@@ -24,7 +24,8 @@ class Task:
             "description": self.description,
             "status": self.status,
             "expire_date": self.expire_date,
-            "user_id": ObjectId(self.user_id)
+            "user_id": ObjectId(self.user_id),
+            "created_at": datetime.utcnow()
         }
         
         print(f"DEBUG: Task data para salvar: {task_data}", file=sys.stderr)

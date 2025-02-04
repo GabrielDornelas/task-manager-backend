@@ -137,7 +137,8 @@ class User:
         user_data = {
             "username": self.username,
             "password": self.password,
-            "email": self.email
+            "email": self.email,
+            "last_login": datetime.utcnow()
         }
         
         try:

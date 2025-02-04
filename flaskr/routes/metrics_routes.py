@@ -5,6 +5,7 @@ from ..infra.db import get_db
 from datetime import datetime, timedelta
 import time
 from functools import wraps
+from ..utils.auth import login_required
 
 metrics_bp = Blueprint('metrics', __name__)
 
@@ -29,6 +30,7 @@ def measure_time():
     return decorator
 
 @metrics_bp.route('/metrics')
+@login_required
 def get_metrics():
     """Endpoint para métricas básicas do sistema"""
     db = get_db()
