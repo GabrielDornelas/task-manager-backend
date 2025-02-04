@@ -1,10 +1,6 @@
 from flask import jsonify, request, g
 from ..models.task import Task
 from datetime import datetime
-from ..infra.redis_client import (
-    cache_task_list,
-    get_cached_task_list
-)
 from ..controllers.auth_controller import login_required
 import sys
 
@@ -27,18 +23,10 @@ def get_task(task_id):
 @login_required
 def get_all_tasks():
     user_id = str(g.user._id)
-    
-    # Try to get from cache first
-    cached_tasks = get_cached_task_list(user_id)
-    if cached_tasks:
-
-        return jsonify(cached_tasks), 200
 
     tasks = Task.get_all_for_user(user_id)
     tasks_data = [task.to_dict() for task in tasks]
 
-    # Store in cache
-    cache_task_list(user_id, tasks_data)
     return jsonify(tasks_data), 200
 
 

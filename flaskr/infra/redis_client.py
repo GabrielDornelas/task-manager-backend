@@ -77,12 +77,12 @@ def get_cached_user(user_id: str) -> Optional[dict]:
     key = f"user_cache:{user_id}"
     data = cast(Optional[bytes], redis.get(key))
     if data:
-
         try:
             return json.loads(data.decode('utf-8'))
         except (json.JSONDecodeError, UnicodeDecodeError):
             return None
     return None
+
 
 def invalidate_user_cache(user_id: str) -> None:
     """Removes user cache"""
@@ -104,62 +104,8 @@ def get_cached_with_prefix(prefix: str, key: str) -> Optional[Any]:
     cache_key = f"{prefix}:{key}"
     data = cast(Optional[bytes], redis.get(cache_key))
     if data:
-
         try:
             return json.loads(data.decode('utf-8'))
         except (json.JSONDecodeError, UnicodeDecodeError):
             return None
     return None
-
-def cache_task(task_id: str, task_data: dict, expires_in: int = 300) -> None:
-    """Caches task"""
-    redis = get_redis()
-    key = f"task_cache:{task_id}"
-    redis.setex(key, expires_in, json.dumps(task_data))
-
-
-def get_cached_task(task_id: str) -> Optional[dict]:
-    """Retrieves task from cache"""
-    redis = get_redis()
-    key = f"task_cache:{task_id}"
-    data = cast(Optional[bytes], redis.get(key))
-    if data:
-
-        try:
-            return json.loads(data.decode('utf-8'))
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            return None
-    return None
-
-def cache_task_list(user_id: str, tasks: list, expires_in: int = 60) -> None:
-    """Caches task list"""
-    redis = get_redis()
-    key = f"task_list:{user_id}"
-    redis.setex(key, expires_in, json.dumps(tasks))
-
-
-def get_cached_task_list(user_id: str) -> Optional[list]:
-    """Retrieves task list from cache"""
-    redis = get_redis()
-    key = f"task_list:{user_id}"
-    data = cast(Optional[bytes], redis.get(key))
-    if data:
-
-        try:
-            return json.loads(data.decode('utf-8'))
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            return None
-    return None
-
-def invalidate_task_cache(task_id: str) -> None:
-    """Removes task from cache"""
-    redis = get_redis()
-    key = f"task_cache:{task_id}"
-    redis.delete(key)
-
-
-def invalidate_user_task_list(user_id: str) -> None:
-    """Removes task list from cache"""
-    redis = get_redis()
-    key = f"task_list:{user_id}"
-    redis.delete(key)

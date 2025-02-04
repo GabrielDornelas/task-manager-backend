@@ -28,7 +28,8 @@ def create_app(test_config=None):
                  "Content-Type", 
                  "Authorization",
                  "Cache-Control",
-                 "Pragma"
+                 "Pragma",
+                 "Expires"
              ],
              "supports_credentials": True
          }})

@@ -185,7 +185,6 @@ def request_password_reset():
         return jsonify({"error": "Email not found"}), 404
 
     # Generate reset token
-
     reset_token = jwt.encode(
         {
             'user_id': str(user._id),
