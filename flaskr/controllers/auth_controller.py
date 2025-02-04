@@ -7,6 +7,7 @@ from ..infra.redis_client import (
     store_jwt_token, invalidate_jwt_token, is_token_valid,
     store_reset_token
 )
+
 import os
 from flask_mail import Mail, Message
 

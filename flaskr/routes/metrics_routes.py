@@ -5,7 +5,8 @@ from ..infra.db import get_db
 from datetime import datetime, timedelta
 import time
 from functools import wraps
-from ..utils.auth import login_required
+from ..controllers.auth_controller import login_required
+
 
 metrics_bp = Blueprint('metrics', __name__)
 
