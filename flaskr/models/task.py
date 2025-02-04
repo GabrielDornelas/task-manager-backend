@@ -3,13 +3,14 @@ from ..infra.db import get_db
 from datetime import datetime, timedelta
 
 class Task:
-    def __init__(self, title, description, status, expire_date, user_id, _id=None):
+    def __init__(self, title, description, status, expire_date, user_id, created_at=None, _id=None):
         self._id = str(_id) if _id else None
         self.title = title
         self.description = description
         self.status = status
         self.expire_date = expire_date
         self.user_id = str(user_id) if user_id else None
+        self.created_at = created_at
 
     def save(self):
         db = get_db()
@@ -21,7 +22,7 @@ class Task:
             "status": self.status,
             "expire_date": self.expire_date,
             "user_id": ObjectId(self.user_id),
-            "created_at": datetime.utcnow()
+            "created_at": self.created_at
         }
         
         try:
@@ -58,7 +59,8 @@ class Task:
                     status=task_data['status'],
                     expire_date=task_data['expire_date'],
                     user_id=str(task_data['user_id']),
-                    _id=str(task_data['_id'])
+                    _id=str(task_data['_id']),
+                    created_at=task_data['created_at']
                 )
         except Exception as e:
             return None
@@ -78,7 +80,8 @@ class Task:
                 status=task_data['status'],
                 expire_date=task_data['expire_date'],
                 user_id=str(task_data['user_id']),
-                _id=str(task_data['_id'])
+                _id=str(task_data['_id']),
+                created_at=task_data['created_at']
             )
             tasks.append(task)
         return tasks
@@ -91,10 +94,10 @@ class Task:
             'description': self.description,
             'status': self.status,
             'expire_date': self.expire_date,
-
             'user_id': str(self.user_id),
-            'created_at': self.created_at.isoformat() if hasattr(self, 'created_at') else None
+            'created_at': self.created_at.isoformat()
         }
+
 
     def update(self, data):
         """Update task data"""

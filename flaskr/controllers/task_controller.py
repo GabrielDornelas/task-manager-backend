@@ -78,7 +78,8 @@ def create_task():
         description=data['description'],
         status=data['status'],
         expire_date=data.get('expire_date'),
-        user_id=g.user._id
+        user_id=g.user._id,
+        created_at=datetime.now()
     )
 
     # Save
@@ -103,6 +104,7 @@ def update_task(task_id):
         return jsonify({"error": "Forbidden"}), 403
 
     data = request.get_json()
+    data['created_at'] = datetime.now()
     task.update(data)
     return '', 204
 
