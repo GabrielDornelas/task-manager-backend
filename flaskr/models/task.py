@@ -15,10 +15,6 @@ class Task:
         db = get_db()
         tasks_collection = db["tasks"]
         
-        import sys
-        print(f"DEBUG: Salvando task com user_id: {self.user_id}", file=sys.stderr)
-        print(f"DEBUG: Tipo do user_id: {type(self.user_id)}", file=sys.stderr)
-        
         task_data = {
             "title": self.title,
             "description": self.description,
@@ -27,8 +23,6 @@ class Task:
             "user_id": ObjectId(self.user_id),
             "created_at": datetime.utcnow()
         }
-        
-        print(f"DEBUG: Task data para salvar: {task_data}", file=sys.stderr)
         
         try:
             if self._id:  # Update
@@ -43,7 +37,6 @@ class Task:
             
             return self._id
         except Exception as e:
-            print(f"DEBUG: Erro ao salvar task: {str(e)}", file=sys.stderr)
             return None
 
     def delete(self):
@@ -54,7 +47,7 @@ class Task:
 
     @classmethod
     def get_by_id(cls, id):
-        """Busca uma task pelo ID"""
+        """Search for a task by ID"""
         db = get_db()
         try:
             task_data = db['tasks'].find_one({'_id': ObjectId(id)})
@@ -68,26 +61,17 @@ class Task:
                     _id=str(task_data['_id'])
                 )
         except Exception as e:
-            print(f"DEBUG: Erro ao buscar task: {str(e)}", file=sys.stderr)
-        return None
+            return None
 
     @staticmethod
     def get_all_for_user(user_id):
         db = get_db()
         tasks_collection = db["tasks"]
         
-        import sys
-        print("DEBUG: Iniciando busca de tasks", file=sys.stderr)
-        print(f"DEBUG: user_id recebido: {user_id}", file=sys.stderr)
-        print(f"DEBUG: tipo do user_id: {type(user_id)}", file=sys.stderr)
-        
-        # Converter para ObjectId na busca já que salvamos como ObjectId
+        # Convert to ObjectId in the search since we saved it as ObjectId
         tasks_cursor = tasks_collection.find({"user_id": ObjectId(user_id)})
         tasks = []
-        
-        print("DEBUG: Tasks encontradas:", file=sys.stderr)
         for task_data in tasks_cursor:
-            print(f"DEBUG: Task encontrada: {task_data}", file=sys.stderr)
             task = Task(
                 title=task_data['title'],
                 description=task_data['description'],
@@ -97,24 +81,23 @@ class Task:
                 _id=str(task_data['_id'])
             )
             tasks.append(task)
-        
-        print(f"DEBUG: Total de tasks encontradas: {len(tasks)}", file=sys.stderr)
         return tasks
 
     def to_dict(self):
-        """Converte a task para dicionário"""
+        """Convert task to dictionary"""
         return {
             'id': str(self._id),
             'title': self.title,
             'description': self.description,
             'status': self.status,
             'expire_date': self.expire_date,
+
             'user_id': str(self.user_id),
             'created_at': self.created_at.isoformat() if hasattr(self, 'created_at') else None
         }
 
     def update(self, data):
-        """Atualiza os dados da task"""
+        """Update task data"""
         if 'title' in data:
             self.title = data['title']
         if 'description' in data:
@@ -128,7 +111,7 @@ class Task:
 
     @classmethod
     def count_by_status(cls):
-        """Conta tasks por status"""
+        """Count tasks by status"""
         db = get_db()
         pipeline = [
             {'$group': {
@@ -140,23 +123,26 @@ class Task:
         result = db.tasks.aggregate(pipeline)
         counts = {doc['_id']: doc['count'] for doc in result}
         
-        # Garantir que todos os status apareçam
+        # Ensure all statuses appear
         all_status = {'pending': 0, 'in_progress': 0, 'completed': 0}
         all_status.update(counts)
         return all_status
 
+
     @classmethod
     def get_error_rate(cls, hours=24):
-        """Calcula taxa de erros nas últimas X horas"""
+        """Calculate error rate in the last X hours"""
         db = get_db()
         since = datetime.utcnow() - timedelta(hours=hours)
         
-        # Aqui você pode implementar sua lógica específica de erro
-        # Por exemplo, tasks que falharam ou foram canceladas
+
+        # Here you can implement your specific error logic
+        # For example, tasks that failed or were canceled
         total = db.tasks.count_documents({'created_at': {'$gte': since}})
         errors = db.tasks.count_documents({
             'created_at': {'$gte': since},
-            'status': 'error'  # ou outro critério de erro
+            'status': 'error'  # or other error criteria
         })
+
         
         return round(errors / total * 100, 2) if total > 0 else 0

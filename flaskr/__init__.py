@@ -48,10 +48,6 @@ def create_app(test_config=None):
         config={'app_name': "Task Manager API"}
     )
     app.register_blueprint(swagger_bp, url_prefix=SWAGGER_URL)
-    
-    # List as rotas
-    # for rule in app.url_map.iter_rules():
-    #     print(f"Endpoint: {rule.endpoint}\nURL: {rule.rule}")
 
     CORS(app, resources={
         r"/auth/*": {"origins": ["http://localhost:3000"]},

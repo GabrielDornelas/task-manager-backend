@@ -23,8 +23,8 @@ class User:
 
     @classmethod
     def get_by_id(cls, id):
-        """Busca um usuário pelo ID, usando cache"""
-        # Tentar recuperar do cache primeiro
+        """Searches for a user by ID, using cache"""
+        # Try to recover from the cache first
         cached_data = get_cached_user(str(id))
         if cached_data:
             return cls(
@@ -34,7 +34,7 @@ class User:
                 last_login=cached_data.get('last_login')
             )
 
-        # Se não estiver em cache, buscar no banco
+        # If not cached, search the database
         db = get_db()
         user_data = db['users'].find_one({'_id': ObjectId(id)})
         if user_data:
@@ -43,7 +43,7 @@ class User:
     
     @classmethod
     def get_by_username(cls, username):
-        """Busca um usuário pelo username, usando cache"""
+        """Searches for a user by username, using cache"""
         db = get_db()
         user_data = db['users'].find_one({'username': username})
         
@@ -60,7 +60,7 @@ class User:
 
     @classmethod
     def get_by_email(cls, email):
-        """Busca um usuário pelo email"""
+        """Search for a user by email"""
         db = get_db()
         user_data = db['users'].find_one({'email': email})
         if user_data:
@@ -68,20 +68,14 @@ class User:
         return None
 
     def check_password(self, password):
-        """Verifica se a senha fornecida é válida"""
-        import sys
-        print(f"DEBUG: Verificando senha para usuário: {self.username}", file=sys.stderr)
-        print(f"DEBUG: Hash armazenado: {self.password}", file=sys.stderr)
-        print(f"DEBUG: Senha fornecida: {password}", file=sys.stderr)
-        
+        """Checks that the password provided is valid"""
         if not self.password:
-            print("DEBUG: ERRO - Password está None!", file=sys.stderr)
             return False
         
         return check_password_hash(self.password, password)
 
     def update_password(self, new_password):
-        """Atualiza a senha do usuário e invalida cache"""
+        """Updates user password and invalidates cache"""
         db = get_db()
         hashed_password = generate_password_hash(new_password)
         result = db['users'].update_one(
@@ -90,13 +84,13 @@ class User:
         )
         if result.modified_count > 0:
             self.password = hashed_password
-            # Invalidar cache após atualização
+            # Invalidate cache after update
             invalidate_user_cache(str(self._id))
             return True
         return False
 
     def to_dict(self):
-        """Converte o usuário para dicionário"""
+        """Convert user to dictionary"""
         return {
             'id': str(self._id),
             'username': self.username,
@@ -108,8 +102,8 @@ class User:
         db = get_db()
         users_collection = db["users"]
         
-        # Verificar se já existe usuário com mesmo username ou email
-        if not self._id:  # Apenas verifica duplicatas para novos usuários
+        # Check if there is already a user with the same username or email address
+        if not self._id:  # Only checks duplicates for new users
             existing_user = users_collection.find_one({
                 "$or": [
                     {"username": self.username},
@@ -119,7 +113,7 @@ class User:
             if existing_user:
                 return None
         
-        # Garantir que o password seja hasheado antes de salvar
+        # Ensure that the password is hashed before saving
         if self.password and not self.password.startswith('scrypt:'):
             self.password = generate_password_hash(self.password)
         
@@ -140,16 +134,15 @@ class User:
             
             return self._id
         except Exception as e:
-            print(f"DEBUG: Erro ao salvar usuário: {str(e)}", file=sys.stderr)
             return None
 
     @classmethod
     def count_active_users(cls, hours=24):
-        """Conta usuários ativos nas últimas X horas"""
+        """Count active users in the last X hours"""
         db = get_db()
         since = datetime.utcnow() - timedelta(hours=hours)
         
-        # Buscar usuários com login recente
+        # Search for users with a recent login
         count = db.users.count_documents({
             'last_login': {'$gte': since}
         })

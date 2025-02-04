@@ -10,7 +10,7 @@ from ..controllers.auth_controller import login_required
 
 metrics_bp = Blueprint('metrics', __name__)
 
-# Decorator para medir tempo de resposta
+# Decorator to measure response time
 def measure_time():
     def decorator(f):
         @wraps(f)
@@ -19,11 +19,11 @@ def measure_time():
             result = f(*args, **kwargs)
             end = time.time()
             
-            # Armazenar tempo no contexto da aplicação
+            # Store time in the context of the application
             if not hasattr(metrics_bp, 'response_times'):
                 metrics_bp.response_times = []
             metrics_bp.response_times.append(end - start)
-            # Manter apenas os últimos 100 tempos
+            # Keep only the last 100 times
             metrics_bp.response_times = metrics_bp.response_times[-100:]
             
             return result
@@ -36,18 +36,18 @@ def get_metrics():
     """Endpoint para métricas básicas do sistema"""
     db = get_db()
     
-    # Usuários ativos (logados nas últimas 24h)
+    # Active users (logged in in the last 24 hours)
     active_users = User.count_active_users(hours=24)
     
-    # Tasks por status
+    # Tasks by status
     tasks_by_status = Task.count_by_status()
     
-    # Tempo médio de resposta (dos últimos 100 requests)
+    # Average response time (out of the last 100 requests)
     avg_response_time = 0
     if hasattr(metrics_bp, 'response_times') and metrics_bp.response_times:
         avg_response_time = sum(metrics_bp.response_times) / len(metrics_bp.response_times)
     
-    # Taxa de erros (últimas 24h)
+    # Error rate (last 24h)
     error_rate = Task.get_error_rate(hours=24)
     
     return jsonify({
@@ -56,4 +56,4 @@ def get_metrics():
         'avg_response_time': round(avg_response_time, 3),
         'error_rate': error_rate,
         'timestamp': datetime.utcnow().isoformat()
-    }) 
+    })

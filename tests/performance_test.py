@@ -26,4 +26,4 @@ class TaskManagerUser(HttpUser):
                 "status": "pending",
                 "expire_date": "2024-12-31"
             }
-        ) 
+        )
