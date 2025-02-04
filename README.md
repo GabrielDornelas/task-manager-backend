@@ -31,7 +31,7 @@ API RESTful para gerenciamento de tarefas com autenticação JWT, desenvolvida c
 
 1. Clone o repositório:
 
-git clone https://github.com/seu-usuario/task-manager-backend.git
+git clone https://github.com/GabrielDornelas/task-manager-backend.git
 cd task-manager-backend
 
 2. Configure as variáveis de ambiente:
