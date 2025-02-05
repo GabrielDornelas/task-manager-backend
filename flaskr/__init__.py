@@ -22,7 +22,7 @@ def create_app(test_config=None):
     app.config['CORS_HEADERS'] = 'Content-Type'
     CORS(app, 
          resources={r"/*": {
-             "origins": ["http://localhost:8080"],
+             "origins": '*',
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
              "allow_headers": [
                  "Content-Type", 

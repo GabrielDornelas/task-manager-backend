@@ -31,4 +31,4 @@ class Config:
     JWT_EXPIRATION = int(os.getenv('JWT_EXPIRATION', 300))
     
     # CORS
-    CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000').split(',')
+    CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:9000').split(',')
