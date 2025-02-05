@@ -41,7 +41,13 @@ cd task-manager-backend
 
 cp .env.example .env
 
-3. Execute o script de build:
+(Edite com seus dados)
+
+3. Execute o projeto pelo docker:
+
+docker-compose up
+
+3.1 Ou execute o script de build:
 
 chmod +x build.sh
 
