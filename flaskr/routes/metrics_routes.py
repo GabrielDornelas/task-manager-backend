@@ -2,36 +2,16 @@ from flask import Blueprint, jsonify
 from ..models.user import User
 from ..models.task import Task
 from ..infra.db import get_db
-from datetime import datetime, timedelta
-import time
-from functools import wraps
+from datetime import datetime
 from ..controllers.auth_controller import login_required
+from ..controllers.metrics_controller import measure_time
 
 
 metrics_bp = Blueprint('metrics', __name__)
 
-# Decorator to measure response time
-def measure_time():
-    def decorator(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            start = time.time()
-            result = f(*args, **kwargs)
-            end = time.time()
-            
-            # Store time in the context of the application
-            if not hasattr(metrics_bp, 'response_times'):
-                metrics_bp.response_times = []
-            metrics_bp.response_times.append(end - start)
-            # Keep only the last 100 times
-            metrics_bp.response_times = metrics_bp.response_times[-100:]
-            
-            return result
-        return wrapper
-    return decorator
-
 @metrics_bp.route('/metrics')
 @login_required
+@measure_time()
 def get_metrics():
     """Endpoint para métricas básicas do sistema"""
     db = get_db()

@@ -55,7 +55,7 @@ def create_app(test_config=None):
     app.register_blueprint(metrics_bp)
     
     # Swagger UI
-    SWAGGER_URL = '/api/docs'
+    SWAGGER_URL = '/swagger'
     API_URL = '/static/swagger.json'
     swagger_bp = get_swaggerui_blueprint(
         SWAGGER_URL,

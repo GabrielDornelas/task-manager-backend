@@ -1,11 +1,11 @@
 from flask import Blueprint
-
 from ..controllers.auth_controller import (
     login_required, register, login, logout, 
     request_password_reset, reset_password
 )
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+
 
 # Registering Blueprint routes
 auth_bp.route('/register', methods=['POST'])(register)

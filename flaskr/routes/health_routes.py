@@ -1,10 +1,12 @@
 from flask import Blueprint, jsonify
 from ..infra.db import get_db
 from ..infra.redis_client import get_redis
+from .metrics_routes import measure_time
 
 health_bp = Blueprint('health', __name__)
 
 @health_bp.route('/health')
+@measure_time()
 def health_check():
     health_status = {
         'status': 'healthy',

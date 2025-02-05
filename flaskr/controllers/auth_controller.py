@@ -7,11 +7,12 @@ from ..infra.redis_client import (
     store_jwt_token, invalidate_jwt_token, is_token_valid,
     store_reset_token, cache_user
 )
-
+from .metrics_controller import measure_time
 import os
 from flask_mail import Mail, Message
 from datetime import datetime, timedelta
 from ..infra.db import get_db
+
 
 # Secret key to sign the JWT
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev')
@@ -55,6 +56,7 @@ def login_required(view):
             return jsonify({"error": str(e)}), 401
     return wrapped_view
 
+
 def get_logged_user_id():
     """ Returns the logged in user ID from the JWT """
     if hasattr(g, 'user') and g.user:
@@ -82,6 +84,8 @@ def get_logged_user_id():
         pass
     return None
 
+
+@measure_time()
 def register():
     data = request.get_json()
     if not data or not all(k in data for k in ['username', 'password', 'email']):
@@ -108,6 +112,8 @@ def register():
 
     return jsonify({'message': 'User registered successfully', 'id': user_id}), 201
 
+
+@measure_time()
 def login():
     data = request.get_json()
     username = data.get('username')
@@ -149,7 +155,9 @@ def login():
         "expires_in": JWT_EXPIRATION
     }), 200
 
+
 @login_required
+@measure_time()
 def logout():
     """Route for logout"""
     # Invalidate token in Redis
@@ -173,6 +181,8 @@ def get_user_from_jwt(token):
     except (IndexError, jwt.ExpiredSignatureError, jwt.InvalidTokenError):
         raise Exception("Invalid or expired token")
 
+
+@measure_time()
 def request_password_reset():
     """Route for requesting password reset"""
     data = request.get_json()
@@ -202,6 +212,8 @@ def request_password_reset():
         "message": "Password reset requested"
     }), 200
 
+
+@measure_time()
 def reset_password():
     """Route for resetting password using the token"""
     data = request.get_json()
@@ -231,6 +243,7 @@ def reset_password():
     except jwt.InvalidTokenError:
         return jsonify({"error": "Invalid token"}), 401
 
+
 def send_password_reset_email(user, reset_token):
     """Sends password reset email"""
     mail = Mail(current_app)
@@ -253,4 +266,3 @@ def send_password_reset_email(user, reset_token):
             mail.send(msg)
     except Exception as e:
         print(f"Error sending email: {e}")
-

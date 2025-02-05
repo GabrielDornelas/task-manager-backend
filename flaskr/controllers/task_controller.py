@@ -1,8 +1,10 @@
 from flask import jsonify, request, g
 from ..models.task import Task
 from datetime import datetime
-from ..controllers.auth_controller import login_required
+from .auth_controller import login_required
+from .metrics_controller import measure_time
 import sys
+
 
 def check_task_owner(task):
     """Checks if the task belongs to the logged in user"""
@@ -10,6 +12,7 @@ def check_task_owner(task):
 
 
 @login_required
+@measure_time()
 def get_task(task_id):
     task = Task.get_by_id(task_id)
     if not task:
@@ -20,9 +23,12 @@ def get_task(task_id):
 
     return jsonify(task.to_dict()), 200
 
+
 @login_required
+@measure_time()
 def get_all_tasks():
     user_id = str(g.user._id)
+
 
     tasks = Task.get_all_for_user(user_id)
     tasks_data = [task.to_dict() for task in tasks]
@@ -31,9 +37,11 @@ def get_all_tasks():
 
 
 @login_required
+@measure_time()
 def create_task():
     """Create a new task"""
     data = request.get_json()
+
 
     # Validate data
     if not data:
@@ -82,9 +90,12 @@ def create_task():
 
     return jsonify({'error': 'Failed to create task'}), 400
 
+
 @login_required
+@measure_time()
 def update_task(task_id):
     task = Task.get_by_id(task_id)
+
     if not task:
         return jsonify({"error": "Task not found"}), 404
 
@@ -96,10 +107,13 @@ def update_task(task_id):
     task.update(data)
     return '', 204
 
+
 @login_required
+@measure_time()
 def delete_task(task_id):
     task = Task.get_by_id(task_id)
     if not task:
+
         return jsonify({"error": "Task not found"}), 404
         
     if not check_task_owner(task):
