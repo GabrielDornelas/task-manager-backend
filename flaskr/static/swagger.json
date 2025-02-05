@@ -1,0 +1,311 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "API de Gerenciamento de Tarefas",
+    "description": "Documentação da API para gerenciamento de tarefas, incluindo autenticação, saúde e métricas."
+  },
+  "host": "localhost:5000",
+  "basePath": "/",
+  "schemes": ["http"],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Registro de novo usuário",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "user",
+            "description": "Dados do novo usuário",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string"
+                },
+                "password": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Usuário registrado com sucesso"
+          },
+          "400": {
+            "description": "Erro de validação"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login do usuário",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "user",
+            "description": "Credenciais do usuário",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string"
+                },
+                "password": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login bem-sucedido"
+          },
+          "401": {
+            "description": "Credenciais inválidas"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Logout do usuário",
+        "responses": {
+          "200": {
+            "description": "Login bem-sucedido"
+          },
+          "401": {
+            "description": "Credenciais inválidas"
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "summary": "Solicitação de redefinição de senha",
+        "responses": {
+          "200": {
+            "description": "Redefinição de senha solicitada com sucesso"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          },
+          "400": {
+            "description": "Erro de validação"
+          }
+        }
+      }
+    },
+    "/auth/reset-password/confirm": {
+      "post": {
+        "summary": "Redefinir a senha usando o token",
+        "responses": {
+          "200": {
+            "description": "Senha atualizada com sucesso"
+          },
+          "400": {
+            "description": "Erro de validação"
+          },
+          "401": {
+            "description": "Credenciais inválidas"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Verifica a saúde da aplicação",
+        "responses": {
+          "200": {
+            "description": "Status da aplicação",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string"
+                },
+                "checks": {
+                  "type": "object",
+                  "properties": {
+                    "database": {
+                      "type": "boolean"
+                    },
+                    "redis": {
+                      "type": "boolean"
+                    },
+                    "api": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Obtém métricas do sistema",
+        "responses": {
+          "200": {
+            "description": "Métricas do sistema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "active_users": {
+                  "type": "integer"
+                },
+                "tasks_by_status": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer"
+                  }
+                },
+                "avg_response_time": {
+                  "type": "number"
+                },
+                "error_rate": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks": {
+      "get": {
+        "summary": "Lista todas as tarefas",
+        "responses": {
+          "200": {
+            "description": "Uma lista de tarefas",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Task"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Cria uma nova tarefa",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "task",
+            "description": "Tarefa a ser criada",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Task"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Tarefa criada com sucesso"
+          }
+        }
+      }
+    },
+    "/tasks/{id}": {
+      "get": {
+        "summary": "Obtém uma tarefa específica",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Uma tarefa específica",
+            "schema": {
+              "$ref": "#/definitions/Task"
+            }
+          },
+          "404": {
+            "description": "Tarefa não encontrada"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualiza uma tarefa existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tarefa atualizada com sucesso"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Exclui uma tarefa existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tarefa excluída com sucesso"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Task": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "ObjectId"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "status": {
+          "type": "Enum",
+          "enum": ["pending", "in_progress", "completed"]
+        },
+        "expire_date": {
+          "type": "date"
+        },
+        "user_id": {
+          "type": "ObjectId"
+        },
+        "created_at": {
+          "type": "date"
+        }
+      },
+      "required": ["title", "description", "status", "expire_date", "user_id"]
+    }
+  }
+}
