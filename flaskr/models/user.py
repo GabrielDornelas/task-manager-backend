@@ -21,6 +21,7 @@ class User:
         else:
             self.password = password
 
+
     @classmethod
     def get_by_id(cls, id):
         """Searches for a user by ID, using cache"""
@@ -40,7 +41,8 @@ class User:
         if user_data:
             return cls(**user_data)
         return None
-    
+
+
     @classmethod
     def get_by_username(cls, username):
         """Searches for a user by username, using cache"""
@@ -58,6 +60,7 @@ class User:
             return user
         return None
 
+
     @classmethod
     def get_by_email(cls, email):
         """Search for a user by email"""
@@ -67,12 +70,14 @@ class User:
             return cls(**user_data)
         return None
 
+
     def check_password(self, password):
         """Checks that the password provided is valid"""
         if not self.password:
             return False
         
         return check_password_hash(self.password, password)
+
 
     def update_password(self, new_password):
         """Updates user password and invalidates cache"""
@@ -89,6 +94,7 @@ class User:
             return True
         return False
 
+
     def to_dict(self):
         """Convert user to dictionary"""
         return {
@@ -97,6 +103,7 @@ class User:
             'email': self.email,
             'last_login': self.last_login.isoformat() if self.last_login else None
         }
+
 
     def save(self):
         db = get_db()
@@ -135,6 +142,7 @@ class User:
             return self._id
         except Exception as e:
             return None
+
 
     @classmethod
     def count_active_users(cls, hours=24):

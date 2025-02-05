@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 from ..infra.db import get_db
 from ..infra.redis_client import get_redis
-from .metrics_routes import measure_time
+from ..controllers.metrics_controller import measure_time
 
 health_bp = Blueprint('health', __name__)
 

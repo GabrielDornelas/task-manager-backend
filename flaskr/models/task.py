@@ -1,6 +1,5 @@
 from bson import ObjectId
 from ..infra.db import get_db
-from datetime import datetime, timedelta
 
 class Task:
     def __init__(self, title, description, status, expire_date, user_id, created_at=None, _id=None):
@@ -11,6 +10,7 @@ class Task:
         self.expire_date = expire_date
         self.user_id = str(user_id) if user_id else None
         self.created_at = created_at
+
 
     def save(self):
         db = get_db()
@@ -40,11 +40,13 @@ class Task:
         except Exception as e:
             return None
 
+
     def delete(self):
         db = get_db()
         tasks_collection = db["tasks"]
         result = tasks_collection.delete_one({"_id": ObjectId(self._id)})
         return result.deleted_count > 0
+
 
     @classmethod
     def get_by_id(cls, id):
@@ -64,6 +66,7 @@ class Task:
                 )
         except Exception as e:
             return None
+
 
     @staticmethod
     def get_all_for_user(user_id):
@@ -85,6 +88,7 @@ class Task:
             )
             tasks.append(task)
         return tasks
+
 
     def to_dict(self):
         """Convert task to dictionary"""
@@ -112,6 +116,7 @@ class Task:
         
         return self.save()
 
+
     @classmethod
     def count_by_status(cls):
         """Count tasks by status"""
@@ -130,22 +135,3 @@ class Task:
         all_status = {'pending': 0, 'in_progress': 0, 'completed': 0}
         all_status.update(counts)
         return all_status
-
-
-    @classmethod
-    def get_error_rate(cls, hours=24):
-        """Calculate error rate in the last X hours"""
-        db = get_db()
-        since = datetime.utcnow() - timedelta(hours=hours)
-        
-
-        # Here you can implement your specific error logic
-        # For example, tasks that failed or were canceled
-        total = db.tasks.count_documents({'created_at': {'$gte': since}})
-        errors = db.tasks.count_documents({
-            'created_at': {'$gte': since},
-            'status': 'error'  # or other error criteria
-        })
-
-        
-        return round(errors / total * 100, 2) if total > 0 else 0
