@@ -1,7 +1,7 @@
 import pytest
 from flaskr.models.user import User
 from flaskr.infra.db import get_db
-from flaskr.infra.redis_client import get_redis, get_cached_user
+from flaskr.infra.redis_client import get_redis, get_cached_user, get_reset_token
 import json
 from bson import ObjectId
 from datetime import datetime
@@ -16,6 +16,7 @@ def test_register(client):
 
     assert response.status_code == 201
     assert b"User registered successfully" in response.data
+
 
 def test_register_duplicate_username(client):
     """Test of duplicate username registration"""
@@ -36,6 +37,7 @@ def test_register_duplicate_username(client):
     })
     assert response.status_code == 400
     assert b"Username already taken" in response.data
+
 
 def test_login_and_jwt_cache(client):
     """Test of login and JWT cache"""
@@ -98,6 +100,8 @@ def test_password_reset_flow(client):
         'email': 'reset@example.com'
     })
 
+    user = User.get_by_email('reset@example.com')
+
     # Request reset
     response = client.post('/auth/reset-password', json={
         'email': 'reset@example.com'
@@ -105,11 +109,13 @@ def test_password_reset_flow(client):
 
     assert response.status_code == 200
     data = json.loads(response.data)
-    assert 'token' in data
+    assert data['message'] == "Password reset requested"
+
+    reset_token = get_reset_token(user._id)
 
     # Reset password
     response = client.post('/auth/reset-password/confirm', json={
-        'token': data['token'],
+        'token': reset_token,
         'new_password': 'new_pass123'
     })
 

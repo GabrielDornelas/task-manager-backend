@@ -196,9 +196,10 @@ def request_password_reset():
     # Store token in Redis
     store_reset_token(str(user._id), reset_token)
 
+    send_password_reset_email(user, reset_token)
+
     return jsonify({
-        "message": "Password reset requested",
-        "token": reset_token
+        "message": "Password reset requested"
     }), 200
 
 def reset_password():
@@ -230,16 +231,26 @@ def reset_password():
     except jwt.InvalidTokenError:
         return jsonify({"error": "Invalid token"}), 401
 
-def send_password_reset_email(user, reset_link):
+def send_password_reset_email(user, reset_token):
     """Sends password reset email"""
     mail = Mail(current_app)
     msg = Message('Password Reset',
                  sender=current_app.config['MAIL_USERNAME'],
                  recipients=[user.email])
 
-    msg.body = f'''Para resetar sua senha, acesse o link abaixo:
-{reset_link}
+    origin = request.headers.get('Origin')
+    reset_url = f"{origin}/auth/reset-password/{reset_token}"
+    
 
-Se você não solicitou a recuperação de senha, ignore este email.
-'''
-    mail.send(msg)
+    link = f'Para resetar sua senha, clique no link abaixo:\n{reset_url}'
+    link += '\nSe você não solicitou a recuperação de senha, ignore este email.'
+
+    msg.body = link
+
+    try:
+        test = True
+        if test:
+            mail.send(msg)
+    except Exception as e:
+        print(f"Error sending email: {e}")
+
