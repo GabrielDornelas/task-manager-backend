@@ -1,5 +1,7 @@
 # Task Manager API
 
+## Descrição do Projeto
+
 API RESTful para gerenciamento de tarefas com autenticação JWT, desenvolvida com Flask, MongoDB e Redis.
 
 ## 🚀 Funcionalidades
@@ -45,7 +47,7 @@ chmod +x build.sh
 
 ./build.sh
 
-## 🚀 Uso
+## 🖱️ Uso
 
 ### Endpoints Principais
 
@@ -91,6 +93,18 @@ Execute os testes com:
 
 docker-compose exec app python -m pytest tests/ -v
 
+## 🔐 Variáveis de Ambiente
+
+Veja `.env.example` para todas as variáveis necessárias e suas descrições.
+
+Variáveis obrigatórias:
+
+- `SECRET_KEY`: Chave secreta para JWT
+- `MONGO_URI`: URI de conexão com MongoDB
+- `REDIS_URL`: URI de conexão com Redis
+- `MAIL_USERNAME`: Email para envio
+- `MAIL_PASSWORD`: Senha do email (não é a do email, é a senha do app do email, pode ser encontrada na parte de segurança do seu provedor de email)
+
 ## 📦 Estrutura do Projeto
 
 task-manager-backend/<br>
@@ -107,26 +121,6 @@ task-manager-backend/<br>
 ├── run.sh # Script de run<br>
 ├── test.sh # Script de testes<br>
 └── docker-compose.yml # Configuração Docker Compose<br>
-
-## 🔐 Variáveis de Ambiente
-
-Veja `.env.example` para todas as variáveis necessárias e suas descrições.
-
-Variáveis obrigatórias:
-
-- `SECRET_KEY`: Chave secreta para JWT
-- `MONGO_URI`: URI de conexão com MongoDB
-- `REDIS_URL`: URI de conexão com Redis
-- `MAIL_USERNAME`: Email para envio
-- `MAIL_PASSWORD`: Senha do email (não é a do email, é a senha do app do email, pode ser encontrada na parte de segurança do seu provedor de email)
-
-## 📈 Métricas
-
-O endpoint `/metrics` fornece:
-
-- Número de usuários ativos
-- Tasks por status
-- Tempo médio de resposta
 
 ## 🤝 Contribuindo
 
