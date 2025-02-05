@@ -32,6 +32,7 @@ API RESTful para gerenciamento de tarefas com autenticação JWT, desenvolvida c
 1. Clone o repositório:
 
 git clone https://github.com/GabrielDornelas/task-manager-backend.git
+
 cd task-manager-backend
 
 2. Configure as variáveis de ambiente:
@@ -68,28 +69,21 @@ chmod +x build.sh
 
 - `GET /metrics` - Métricas do sistema
 - `GET /health` - Status da API
-- `GET /api/docs` - Documentação Swagger
+- `GET /swagger` - Documentação Swagger
 
 ### Exemplos de Uso
 
 #### Registro de Usuário
 
-curl -X POST http://localhost:5000/auth/register \
--H "Content-Type: application/json" \
--d '{"username":"user1","password":"pass123","email":"user@example.com"}'
+curl -X POST http://localhost:5000/auth/register -H "Content-Type: application/json" -d '{"username":"user1","password":"pass123","email":"user@example.com"}'
 
 #### Login
 
-curl -X POST http://localhost:5000/auth/login \
--H "Content-Type: application/json" \
--d '{"username":"user1","password":"pass123"}'
+curl -X POST http://localhost:5000/auth/login -H "Content-Type: application/json" -d '{"username":"user1","password":"pass123"}'
 
 #### Criar Tarefa
 
-curl -X POST http://localhost:5000/task \
--H "Authorization: Bearer <seu-token>" \
--H "Content-Type: application/json" \
--d '{"title":"Nova Tarefa","description":"Descrição","status":"pending"}'
+curl -X POST http://localhost:5000/task -H "Authorization: Bearer <seu-token>" -H "Content-Type: application/json" -d '{"title":"Nova Tarefa","description":"Descrição","status":"pending"}'
 
 ## 🔍 Testes
 
@@ -124,7 +118,7 @@ Variáveis obrigatórias:
 - `MONGO_URI`: URI de conexão com MongoDB
 - `REDIS_URL`: URI de conexão com Redis
 - `MAIL_USERNAME`: Email para envio
-- `MAIL_PASSWORD`: Senha do email
+- `MAIL_PASSWORD`: Senha do email (não é a do email, é a senha do app do email, pode ser encontrada na parte de segurança do seu provedor de email)
 
 ## 📈 Métricas
 
@@ -133,7 +127,6 @@ O endpoint `/metrics` fornece:
 - Número de usuários ativos
 - Tasks por status
 - Tempo médio de resposta
-- Taxa de erros
 
 ## 🤝 Contribuindo
 
